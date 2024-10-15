@@ -8,8 +8,47 @@ namespace My2D
         #region Variables
         private Rigidbody2D rb2D;
         private Animator animator;
+        private TouchingDirections touchingDirections;
         //플레이어 걷기 속도
         [SerializeField] private float walkSpeed = 4f;
+        [SerializeField] private float runSpeed = 8f;
+        [SerializeField] private float airSpeed = 2f;
+
+        public float CurrentMoveSpeed
+        {
+            get
+            {
+                if (CanMove)
+                {
+                    if (isMove == true && touchingDirections.IsWall == false)
+                    {
+                        if (touchingDirections.IsGround == true)
+                        {
+                            if (IsRun == true)
+                            {
+                                return runSpeed;
+                            }
+                            else
+                            {
+                                return walkSpeed;
+                            }
+                        }
+                        else
+                        {
+                            return airSpeed;
+                        }
+                    }
+                    else
+                    {
+                        return 0; // Idle State;
+                    }
+                }
+                else
+                {
+                    return 0; // Idle State;
+                }
+            }
+        }
 
         //플레이어 이동과 관련된 입력값
         private Vector2 inputMove;
@@ -44,6 +83,9 @@ namespace My2D
             }
         }
 
+        // 점프
+        [SerializeField] private float jumpForce = 10f;
+
         [SerializeField] private bool isFacingRight = true;
         public bool IsFacingRight
         {
@@ -53,7 +95,7 @@ namespace My2D
             }
             set
             {
-                if(isFacingRight != value)
+                if (isFacingRight != value)
                 {
                     transform.localScale *= new Vector2(-1, 1);
                 }
@@ -68,13 +110,17 @@ namespace My2D
             //참조
             rb2D = GetComponent<Rigidbody2D>();
             animator = GetComponent<Animator>();
+            touchingDirections = GetComponent<TouchingDirections>();
             //sr = GetComponent<SpriteRenderer>();
         }
 
         private void FixedUpdate()
         {
             //플레이어 좌우 이동
-            rb2D.velocity = new Vector2(inputMove.x * walkSpeed, rb2D.velocity.y);
+            rb2D.velocity = new Vector2(inputMove.x * CurrentMoveSpeed, rb2D.velocity.y);
+
+            //애니메이션 값
+            animator.SetFloat(AnimationString.YVelocity, rb2D.velocity.y);
         }
 
         // 바라보는 방향으로 전환
@@ -91,7 +137,10 @@ namespace My2D
                 IsFacingRight = false;
             }
         }
-
+        public bool CanMove
+        {
+            get { return animator.GetBool(AnimationString.CanMove); }
+        }
         public void OnMove(InputAction.CallbackContext context)
         {
             inputMove = context.ReadValue<Vector2>();
@@ -110,6 +159,22 @@ namespace My2D
             else if (context.canceled)
             {
                 IsRun = false;
+            }
+        }
+        public void OnJump(InputAction.CallbackContext context)
+        {
+            if (context.started && touchingDirections.IsGround)
+            {
+                animator.SetTrigger(AnimationString.JumpTrigger);
+                rb2D.velocity = new Vector2(rb2D.velocity.x, jumpForce);
+            }
+        }
+        public void OnAttack01(InputAction.CallbackContext context)
+        {
+            // 마우스를 클릭하는 순간
+            if (context.started && touchingDirections.IsGround)
+            {
+                animator.SetTrigger(AnimationString.AttackTrigger);
             }
         }
     }
