@@ -1,33 +1,42 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Tilemaps;
 using UnityEngine;
 
 namespace My2D
 {
     public class EnemyController : MonoBehaviour
     {
+        #region Variables
+        private Rigidbody2D rb2D;
         private Animator animator;
-        private Rigidbody2D rb;
-        [SerializeField] private float runSpeed = 4f;
-        private Vector2 directionVector = Vector2.right;
         private TouchingDirections touchingDirections;
-        // 플레이어 감지
-        public DetectionZone detectionZone;
+        private Damageable damageable;
 
-        //이동 가능방향
-        public enum WalkableDirection
-        {
-            Left,
-            Right,
-        }
+        //플레이어 감지
+        public DetectionZone detectionZone;
+        //낭떨어지 감지
+        public DetectionZone detectionCliff;
+
+        //이동속도
+        [SerializeField] private float runSpeed = 4f;
+        //이동방향
+        private Vector2 directionVector = Vector2.right;
+
+        //이동 가능 방향
+        public enum WalkableDirection { Left, Right }
+
+        //현재 이동 방향
         private WalkableDirection walkDirection = WalkableDirection.Right;
-        public WalkableDirection WalkDirection
+        public WalkableDirection WalkDiretion
         {
-            get { return walkDirection; }
-            set
-            {
-                transform.localScale *= new Vector2(-1,1);
-                if(value == WalkableDirection.Left)
+            get {  return walkDirection; }
+            private set {
+                //이미지 플립
+                transform.localScale *= new Vector2(-1, 1);
+
+                //실제 이동하는 방향값
+                if (value == WalkableDirection.Left)
                 {
                     directionVector = Vector2.left;
                 }
@@ -35,77 +44,103 @@ namespace My2D
                 {
                     directionVector = Vector2.right;
                 }
+
                 walkDirection = value;
             }
         }
-        // 공격 타겟 설정
+
+        //공격 타겟 설정
         [SerializeField] private bool hasTarget = false;
         public bool HasTarget
         {
             get { return hasTarget; }
-            private set
-            {
+            private set {
                 hasTarget = value;
                 animator.SetBool(AnimationString.HasTarget, value);
             }
         }
-        // 이동 가능 상태/ 불가능 상태 -이동 제한
+
+        //이동 가능 상태/불가능 상태 - 이동 제한
         public bool CanMove
         {
             get { return animator.GetBool(AnimationString.CanMove); }
         }
 
-        // 감속 계수
-        private float stopRate = 0.2f;
-        // Start is called before the first frame update
-        void Awake()
+        //감속 계수
+        [SerializeField] private float stopRate = 0.2f;
+        #endregion
+
+        private void Awake()
         {
+            //참조
+            rb2D = GetComponent<Rigidbody2D>();
             animator = GetComponent<Animator>();
-            rb = GetComponent<Rigidbody2D>();
             touchingDirections = GetComponent<TouchingDirections>();
+
+            damageable = GetComponent<Damageable>();
+            damageable.hitAction += OnHit;
+
+            detectionCliff.noColliderRamain += OnCliffDetection;
+        }
+
+        private void Update()
+        {
+            //적 감지 충돌체의 리스트 갯수가 0보다 크면 적이 감지 된것이다
+            HasTarget = (detectionZone.detectedColliders.Count > 0);
         }
 
         private void FixedUpdate()
         {
-            // 땅에서 이동시 벽을 만나면 방향 전환
-            if (touchingDirections.IsWall && touchingDirections.IsGround)
+            //땅에서 이동시 벽을 만나면 방향 전환
+            if(touchingDirections.IsWall && touchingDirections.IsGround)
             {
+                //방향전환 반전
                 Flip();
             }
-            if(CanMove)
+
+            if(!damageable.LockVelocity)
             {
-                rb.velocity = new Vector2(directionVector.x * runSpeed, rb.velocity.y);
+                //이동
+                if (CanMove)
+                {
+                    rb2D.velocity = new Vector2(directionVector.x * runSpeed, rb2D.velocity.y);
+                }
+                else
+                {
+                    //rb2D.velocity.x -> 0 : Lerp 멈춤
+                    rb2D.velocity = new Vector2(Mathf.Lerp(rb2D.velocity.x, 0f, stopRate), rb2D.velocity.y);
+                }
+            }            
+        }
+
+        //방향전환 반전
+        private void Flip()
+        {
+            if (WalkDiretion == WalkableDirection.Left)
+            {
+                WalkDiretion = WalkableDirection.Right;
+            }
+            else if(WalkDiretion == WalkableDirection.Right)
+            {
+                WalkDiretion = WalkableDirection.Left;
             }
             else
             {
-                // rb.velocity.x -> 0 : Lerp
-                rb.velocity = new Vector2(Mathf.Lerp(rb.velocity.x, 0f, stopRate), rb.velocity.y);
-                //rb.velocity = new Vector2(0f, rb.velocity.y);
+                Debug.Log("Error Flip Direction");
             }
         }
 
-        // 방향전환 반전
-        void Flip()
+        public void OnHit(float damage, Vector2 knockback)
         {
-            if(WalkDirection == WalkableDirection.Left)
-            {
-                WalkDirection = WalkableDirection.Right;
-                
-            }
-            else if (WalkDirection == WalkableDirection.Right)
-            {
-                WalkDirection = WalkableDirection.Left;
-            }
-            else
-            {
-                Debug.Log("ERROR FLIP DIRECTION");
-            }
+            rb2D.velocity = new Vector2(knockback.x, rb2D.velocity.y + knockback.y);
         }
-        // Update is called once per frame
-        void Update()
+
+        public void OnCliffDetection()
         {
-            // 적 감지 충돌체의 리스트 갯수가 0보다 크면 적이 감지된것
-            HasTarget = detectionZone.detectedColliders.Count > 0;
+            if (touchingDirections.IsGround)
+            {
+                Flip();
+            }
         }
     }
 }

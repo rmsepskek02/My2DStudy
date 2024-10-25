@@ -35,7 +35,7 @@
                 {
                     "name": "Run",
                     "type": "Button",
-                    "id": "3ca578d5-4af7-4488-939a-82479f8c00b7",
+                    "id": "b0457a19-8bef-4309-8cfb-5224848e7fb9",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -44,7 +44,16 @@
                 {
                     "name": "Jump",
                     "type": "Button",
-                    "id": "6f22c127-543d-4666-bbd5-a99a4879a107",
+                    "id": "b1233be4-de6e-4829-8fc4-a0aaa7a8e564",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "BowAttack",
+                    "type": "Button",
+                    "id": "0cc8f5c3-4335-4d65-871c-fc8c05d406e3",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -274,7 +283,7 @@
                 },
                 {
                     "name": "",
-                    "id": "375ccaf5-897f-40cb-979f-595df693d87e",
+                    "id": "8d2de387-22a4-440f-bfff-9e72e0f41d90",
                     "path": "<Keyboard>/leftShift",
                     "interactions": "",
                     "processors": "",
@@ -285,12 +294,23 @@
                 },
                 {
                     "name": "",
-                    "id": "fa124648-4446-4b0d-81b2-bf7e328ec9d3",
+                    "id": "85b2d09a-13d2-4010-9d3e-bb3c8e8cb262",
                     "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
-                    "groups": "Keyboard&Mouse",
+                    "groups": "",
                     "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1f53af7e-5821-419b-be9f-ae39c6cd68c9",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "BowAttack",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
